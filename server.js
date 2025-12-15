@@ -1,4 +1,4 @@
-// server.js
+// server.js - Updated for tasks array
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -49,16 +49,20 @@ Return JSON in EXACT structure below.
     "burningDesires": [],
     "affirmations": [],
 
-    "dailyRoutine": {
-      "day1": [],
-      "day2": [],
-      "day3": [],
-      "day4": [],
-      "day5": [],
-      "day6": [],
-      "day7": []
-    }
+    "tasks": []
   }
+}
+
+IMPORTANT - tasks array structure for each task:
+{
+  "id": "generate unique timestamp id",
+  "name": "Task name with time",
+  "message": "Detailed instructions from AI on HOW to do this task",
+  "time": "HH:MM format",
+  "date": "daily",
+  "completed": false,
+  "category": "category name",
+  "createdAt": "current ISO timestamp"
 }
 
 User Data:
@@ -68,16 +72,37 @@ Committed: ${u.isCommitted}
 Knowledge: ${u.knowHow}
 Weekly Goal: ${u.weeklyGoal}
 Method: ${u.howToAchieve}
-Daily Hours: ${u.dailyHours}
-Time Window: ${u.startTime} to ${u.endTime}
+Language: ${u.language || 'en'}
+Optional Details: ${u.optionalDetails || 'None'}
 
-Rules:
-- brainprogram: emotional, subconscious programming
-- burningDesires: exactly 7 powerful desire lines
-- affirmations: exactly 5 identity based
-- dailyRoutine: time based actionable tasks
-- planMeta.benefits: 4–5 clear benefits
-- planMeta.whyThisWorks: psychological + practical reasons
+TASK GENERATION RULES:
+1. Create 4-6 daily tasks based on user's goal
+2. Tasks should be specific, actionable, and time-based
+3. Each task must have detailed "message" explaining HOW to do it
+4. Space tasks throughout the day (morning, afternoon, evening)
+5. Include different categories: fitness, work, learning, review, etc.
+6. All tasks repeat DAILY for 7 days
+7. Make tasks personalized to user's goal: ${u.goal}
+
+BRAINPROGRAM RULES:
+- morning: emotional, inspiring, sets tone for day
+- night: reflective, reinforces progress, prepares for next day
+
+BURNING DESIRES RULES:
+- exactly 7 powerful desire statements
+- start with "I deeply desire..."
+- related to user's goal
+
+AFFIRMATIONS RULES:
+- exactly 5 identity-based statements
+- start with "I am..."
+- present tense
+
+PLANMETA RULES:
+- benefits: 4–5 clear benefits user will experience
+- whyThisWorks: 3-4 psychological + practical reasons
+
+Generate tasks that directly help achieve: ${u.goal}
 `;
 
     const response = await fetch(
@@ -89,7 +114,7 @@ Rules:
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2000
+            maxOutputTokens: 3000
           }
         })
       }
@@ -101,6 +126,19 @@ Rules:
     if (!text) throw new Error("Empty AI response");
 
     const parsed = JSON.parse(text);
+    
+    // Ensure tasks have proper IDs and timestamps
+    const timestamp = Date.now();
+    parsed.currentPlan.tasks = parsed.currentPlan.tasks.map((task, index) => ({
+      ...task,
+      id: `${timestamp}${index}`,
+      date: "daily",
+      completed: false,
+      createdAt: new Date().toISOString()
+    }));
+
+    // Remove dailyRoutine since we're using tasks array
+    delete parsed.currentPlan.dailyRoutine;
 
     res.json({
       success: true,
@@ -108,14 +146,14 @@ Rules:
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Server Error:", err);
     res.status(500).json({
       success: false,
-      error: "Plan generation failed"
+      error: "Plan generation failed. Please try again."
     });
   }
 });
 
 app.listen(PORT, () =>
-  console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
+  console.log(`🚀 SUBCONIC Backend running on port ${PORT}`)
 );
