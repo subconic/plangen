@@ -1,4 +1,4 @@
-// server.js - Updated for tasks array
+// server.js
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -25,7 +25,7 @@ No markdown.
 No explanation.
 No extra text.
 
-Return JSON in EXACT structure below.
+Return JSON in EXACT structure below:
 
 {
   "mainGoal": {
@@ -49,20 +49,11 @@ Return JSON in EXACT structure below.
     "burningDesires": [],
     "affirmations": [],
 
-    "tasks": []
+    "dailyRoutine": {
+      "guide": "A comprehensive guide on how to use this plan daily. Include specific time-based instructions, actionable steps, and practical implementation methods. Structure it as a clear daily guide with time blocks and specific actions.",
+      "implementation": "Point-wise implementation strategy covering how to execute each component of the plan effectively throughout the day."
+    }
   }
-}
-
-IMPORTANT - tasks array structure for each task:
-{
-  "id": "generate unique timestamp id",
-  "name": "Task name with time",
-  "message": "Detailed instructions from AI on HOW to do this task",
-  "time": "HH:MM format",
-  "date": "daily",
-  "completed": false,
-  "category": "category name",
-  "createdAt": "current ISO timestamp"
 }
 
 User Data:
@@ -72,37 +63,26 @@ Committed: ${u.isCommitted}
 Knowledge: ${u.knowHow}
 Weekly Goal: ${u.weeklyGoal}
 Method: ${u.howToAchieve}
-Language: ${u.language || 'en'}
-Optional Details: ${u.optionalDetails || 'None'}
+Daily Hours: ${u.dailyHours}
+Time Window: ${u.startTime} to ${u.endTime}
 
-TASK GENERATION RULES:
-1. Create 4-6 daily tasks based on user's goal
-2. Tasks should be specific, actionable, and time-based
-3. Each task must have detailed "message" explaining HOW to do it
-4. Space tasks throughout the day (morning, afternoon, evening)
-5. Include different categories: fitness, work, learning, review, etc.
-6. All tasks repeat DAILY for 7 days
-7. Make tasks personalized to user's goal: ${u.goal}
+Rules:
+- brainprogram: emotional, subconscious programming routines
+- burningDesires: exactly 7 powerful desire lines
+- affirmations: exactly 5 identity-based affirmations
+- dailyRoutine.guide: detailed daily guide with time-based actionable instructions
+- dailyRoutine.implementation: point-wise execution strategy
+- planMeta.benefits: 4–5 clear benefits
+- planMeta.whyThisWorks: psychological + practical reasons
 
-BRAINPROGRAM RULES:
-- morning: emotional, inspiring, sets tone for day
-- night: reflective, reinforces progress, prepares for next day
-
-BURNING DESIRES RULES:
-- exactly 7 powerful desire statements
-- start with "I deeply desire..."
-- related to user's goal
-
-AFFIRMATIONS RULES:
-- exactly 5 identity-based statements
-- start with "I am..."
-- present tense
-
-PLANMETA RULES:
-- benefits: 4–5 clear benefits user will experience
-- whyThisWorks: 3-4 psychological + practical reasons
-
-Generate tasks that directly help achieve: ${u.goal}
+Important Instructions for dailyRoutine:
+1. Create a comprehensive daily guide that shows exactly how to use the plan throughout the day
+2. Include specific time blocks based on user's time window (${u.startTime} to ${u.endTime})
+3. Structure as a complete daily workflow with actionable steps
+4. Add point-wise implementation strategy for effective execution
+5. Focus on practical, time-based guidance rather than day-wise breakdown
+6. Include morning routine, work blocks, breaks, evening routine, and night preparation
+7. Make it specific to the user's daily hours (${u.dailyHours} hours per day)
 `;
 
     const response = await fetch(
@@ -114,7 +94,7 @@ Generate tasks that directly help achieve: ${u.goal}
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 3000
+            maxOutputTokens: 2500
           }
         })
       }
@@ -126,19 +106,6 @@ Generate tasks that directly help achieve: ${u.goal}
     if (!text) throw new Error("Empty AI response");
 
     const parsed = JSON.parse(text);
-    
-    // Ensure tasks have proper IDs and timestamps
-    const timestamp = Date.now();
-    parsed.currentPlan.tasks = parsed.currentPlan.tasks.map((task, index) => ({
-      ...task,
-      id: `${timestamp}${index}`,
-      date: "daily",
-      completed: false,
-      createdAt: new Date().toISOString()
-    }));
-
-    // Remove dailyRoutine since we're using tasks array
-    delete parsed.currentPlan.dailyRoutine;
 
     res.json({
       success: true,
@@ -146,14 +113,14 @@ Generate tasks that directly help achieve: ${u.goal}
     });
 
   } catch (err) {
-    console.error("Server Error:", err);
+    console.error(err);
     res.status(500).json({
       success: false,
-      error: "Plan generation failed. Please try again."
+      error: "Plan generation failed"
     });
   }
 });
 
 app.listen(PORT, () =>
-  console.log(`🚀 SUBCONIC Backend running on port ${PORT}`)
+  console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
 );
