@@ -1,4 +1,3 @@
-
 // server.js
 const express = require("express");
 const cors = require("cors");
@@ -120,3 +119,4 @@ Rules:
 app.listen(PORT, () =>
   console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
 );
+
