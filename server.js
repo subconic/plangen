@@ -1,122 +1,141 @@
-// server.js
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const port = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({ status: "SUBCONIC API running" });
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+// Generate plan endpoint
+app.post('/generate-plan', async (req, res) => {
+    try {
+        const userData = req.body;
+        
+        // Create structured prompt
+        const prompt = createPrompt(userData);
+        
+        // Generate content using Gemini
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const text = response.text();
+        
+        // Parse the response into JSON structure
+        const plan = parsePlanResponse(text);
+        
+        res.json({
+            success: true,
+            plan: plan,
+            rawResponse: text
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 });
 
-app.post("/api/generate-plan", async (req, res) => {
-  try {
-    const u = req.body;
+// Function to create structured prompt in English
+function createPrompt(userData) {
+    return `
+Create a comprehensive 7-day success plan based on the following user data. Structure your response in this EXACT format:
 
-    const prompt = `
-You are SUBCONIC AI.
+===SUBCONSCIOUS PROGRAM (Morning & Night)===
+[Create a powerful paragraph here that user will read morning and night to program their subconscious mind for success. Make it inspiring and belief-building.]
 
-Generate ONLY valid JSON.
-No markdown.
-No explanation.
-No extra text.
+===BURNING DESIRE QUOTES (7)===
+1. [Quote 1 - motivating and action-oriented]
+2. [Quote 2 - specific to their goal]
+3. [Quote 3 - mindset focused]
+4. [Quote 4 - perseverance theme]
+5. [Quote 5 - identity reinforcing]
+6. [Quote 6 - urgency creating]
+7. [Quote 7 - future vision]
 
-Return JSON in EXACT structure below.
+===IDENTITY AFFIRMATIONS (5)===
+1. [Affirmation 1 - identity statement]
+2. [Affirmation 2 - capability statement]
+3. [Affirmation 3 - transformation statement]
+4. [Affirmation 4 - present tense achievement]
+5. [Affirmation 5 - core identity shift]
 
-{
-  "mainGoal": {
-    "goal": "",
-    "deadline": "",
-    "committed": true
-  },
+===DAILY ROUTINE (Complete Day Structure)===
+[Create a detailed daily routine that starts from morning wake-up to night sleep. Include specific times, activities, and mindset practices. Make it practical and tailored to their time commitment. Structure it in clear time blocks.]
 
-  "planMeta": {
-    "planGoal": "",
-    "benefits": [],
-    "whyThisWorks": []
-  },
+===7-DAY ACTION PLAN===
+Day 1: [Specific action for day 1]
+Day 2: [Specific action for day 2]
+Day 3: [Specific action for day 3]
+Day 4: [Specific action for day 4]
+Day 5: [Specific action for day 5]
+Day 6: [Specific action for day 6]
+Day 7: [Specific action for day 7]
 
-  "currentPlan": {
-    "brainprogram": {
-      "morning": "",
-      "night": ""
-    },
+Now, here is the user data to base the plan on:
 
-    "burningDesires": [],
-    "affirmations": [],
+GOAL: ${userData.goal}
+DEADLINE: ${userData.deadline}
+COMMITMENT LEVEL: ${userData.commitment}
+ACTION PLAN: ${userData.actionPlan}
+WEEKLY GOAL: ${userData.weeklyGoal}
+DAILY HOURS: ${userData.dailyHours}
+WORKING TIME: ${userData.workingTime}
+ADDITIONAL INFO: ${userData.additionalInfo || 'None'}
 
-    "dailyRoutine": {
-      "day1": [],
-      "day2": [],
-      "day3": [],
-      "day4": [],
-      "day5": [],
-      "day6": [],
-      "day7": []
-    }
-  }
+Make the plan specific, actionable, and tailored exactly to this user's situation. Focus on creating a routine that they can follow for 7 days.`;
 }
 
-User Data:
-Goal: ${u.goal}
-Deadline: ${u.deadline}
-Committed: ${u.isCommitted}
-Knowledge: ${u.knowHow}
-Weekly Goal: ${u.weeklyGoal}
-Method: ${u.howToAchieve}
-Daily Hours: ${u.dailyHours}
-Time Window: ${u.startTime} to ${u.endTime}
-
-Rules:
-- brainprogram: emotional, subconscious programming
-- burningDesires: exactly 7 powerful desire lines
-- affirmations: exactly 5 identity based
-- dailyRoutine: time based actionable tasks
-- planMeta.benefits: 4–5 clear benefits
-- planMeta.whyThisWorks: psychological + practical reasons
-`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2000
-          }
-        })
-      }
-    );
-
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) throw new Error("Empty AI response");
-
-    const parsed = JSON.parse(text);
-
-    res.json({
-      success: true,
-      plan: parsed
+// Function to parse the response into structured object
+function parsePlanResponse(text) {
+    const sections = text.split('===');
+    
+    const plan = {
+        subconsciousProgram: '',
+        burningDesireQuotes: [],
+        identityAffirmations: [],
+        dailyRoutine: '',
+        sevenDayPlan: []
+    };
+    
+    sections.forEach(section => {
+        if (section.includes('SUBCONSCIOUS PROGRAM')) {
+            plan.subconsciousProgram = section.replace('SUBCONSCIOUS PROGRAM (Morning & Night)', '').trim();
+        } else if (section.includes('BURNING DESIRE QUOTES')) {
+            const quotesSection = section.replace('BURNING DESIRE QUOTES (7)', '');
+            const quotes = quotesSection.split('\n').filter(line => line.match(/^\d\./));
+            plan.burningDesireQuotes = quotes.map(q => q.replace(/^\d\.\s*/, '').trim());
+        } else if (section.includes('IDENTITY AFFIRMATIONS')) {
+            const affirmationsSection = section.replace('IDENTITY AFFIRMATIONS (5)', '');
+            const affirmations = affirmationsSection.split('\n').filter(line => line.match(/^\d\./));
+            plan.identityAffirmations = affirmations.map(a => a.replace(/^\d\.\s*/, '').trim());
+        } else if (section.includes('DAILY ROUTINE')) {
+            plan.dailyRoutine = section.replace('DAILY ROUTINE (Complete Day Structure)', '').trim();
+        } else if (section.includes('7-DAY ACTION PLAN')) {
+            const planSection = section.replace('7-DAY ACTION PLAN', '');
+            const days = planSection.split('\n').filter(line => line.match(/^Day \d:/));
+            plan.sevenDayPlan = days.map(day => day.trim());
+        }
     });
+    
+    return plan;
+}
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      error: "Plan generation failed"
-    });
-  }
+// Test endpoint
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is working!' });
 });
 
-app.listen(PORT, () =>
-  console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
-);
-
+// Start server
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
