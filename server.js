@@ -124,7 +124,3 @@ Important Instructions for dailyRoutine:
 app.listen(PORT, () =>
   console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
 );
-
-
-is api ko use karne ke liye yek html file do kam design full feature
-const API_URL = 'https://plangen.onrender.com/api/generate-plan';
