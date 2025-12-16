@@ -1,5 +1,5 @@
-// server.js — SUBCONIC Stable Plan Generator Backend
 
+// server.js
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -7,51 +7,28 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ---------------- MIDDLEWARE ----------------
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json());
 
-// ---------------- HEALTH CHECK ----------------
 app.get("/", (req, res) => {
-  res.json({
-    status: "SUBCONIC API running",
-    version: "2.0",
-    time: new Date().toISOString()
-  });
+  res.json({ status: "SUBCONIC API running" });
 });
 
-// ---------------- PLAN GENERATOR ----------------
 app.post("/api/generate-plan", async (req, res) => {
   try {
-    const u = req.body || {};
+    const u = req.body;
 
-    // 🔒 Minimal validation
-    if (!u.goal || typeof u.goal !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Goal is required"
-      });
-    }
-
-    // ---------------- AI PROMPT ----------------
     const prompt = `
 You are SUBCONIC AI.
 
-STRICT RULES:
-- Output ONLY valid JSON
-- No markdown
-- No explanation
-- No comments
-- No extra text
+Generate ONLY valid JSON.
+No markdown.
+No explanation.
+No extra text.
 
-Return JSON in EXACT structure below:
+Return JSON in EXACT structure below.
 
 {
-  "meta": {
-    "createdAt": "",
-    "planType": "subconscious-goal-plan"
-  },
-
   "mainGoal": {
     "goal": "",
     "deadline": "",
@@ -64,41 +41,46 @@ Return JSON in EXACT structure below:
     "whyThisWorks": []
   },
 
-  "brainprogram": {
-    "morning": "",
-    "night": ""
-  },
+  "currentPlan": {
+    "brainprogram": {
+      "morning": "",
+      "night": ""
+    },
 
-  "burningDesires": [],
-  "affirmations": [],
+    "burningDesires": [],
+    "affirmations": [],
 
-  "dailyRoutine": {
-    "guide": "",
-    "implementation": []
+    "dailyRoutine": {
+      "day1": [],
+      "day2": [],
+      "day3": [],
+      "day4": [],
+      "day5": [],
+      "day6": [],
+      "day7": []
+    }
   }
 }
 
-USER DATA:
+User Data:
 Goal: ${u.goal}
-Deadline: ${u.deadline || ""}
+Deadline: ${u.deadline}
 Committed: ${u.isCommitted}
-Knowledge: ${u.knowHow || ""}
-Weekly Goal: ${u.weeklyGoal || ""}
-Method: ${u.howToAchieve || ""}
-Daily Hours: ${u.dailyHours || ""}
-Time Window: ${u.startTime || ""} to ${u.endTime || ""}
+Knowledge: ${u.knowHow}
+Weekly Goal: ${u.weeklyGoal}
+Method: ${u.howToAchieve}
+Daily Hours: ${u.dailyHours}
+Time Window: ${u.startTime} to ${u.endTime}
 
-RULES:
-- burningDesires: EXACTLY 7 lines
-- affirmations: EXACTLY 5 identity-based lines
-- planMeta.benefits: 4–5 points
-- planMeta.whyThisWorks: psychological + practical
-- dailyRoutine.guide: full daily workflow (time-based)
-- dailyRoutine.implementation: point-wise execution steps
-- brainprogram: emotional, subconscious tone
+Rules:
+- brainprogram: emotional, subconscious programming
+- burningDesires: exactly 7 powerful desire lines
+- affirmations: exactly 5 identity based
+- dailyRoutine: time based actionable tasks
+- planMeta.benefits: 4–5 clear benefits
+- planMeta.whyThisWorks: psychological + practical reasons
 `;
 
-    // ---------------- AI CALL ----------------
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -108,57 +90,26 @@ RULES:
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2500
+            maxOutputTokens: 2000
           }
         })
       }
     );
 
-    if (!response.ok) {
-      throw new Error("Gemini API failed");
-    }
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    const aiData = await response.json();
-    const text =
-      aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Empty AI response");
 
-    if (!text) {
-      throw new Error("Empty AI response");
-    }
+    const parsed = JSON.parse(text);
 
-    // ---------------- SAFE JSON PARSE ----------------
-    let plan;
-    try {
-      plan = JSON.parse(text);
-    } catch (parseErr) {
-      console.error("JSON PARSE ERROR:", text);
-      throw new Error("Invalid AI JSON");
-    }
-
-    // ---------------- NORMALIZE OUTPUT ----------------
-    const finalPlan = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-
-      mainGoal: plan.mainGoal,
-      planMeta: plan.planMeta,
-
-      brainprogram: plan.brainprogram,
-      burningDesires: plan.burningDesires,
-      affirmations: plan.affirmations,
-
-      dailyRoutine: plan.dailyRoutine
-    };
-
-    // ---------------- RESPONSE ----------------
     res.json({
       success: true,
-      plan: finalPlan
+      plan: parsed
     });
 
   } catch (err) {
-    console.error("PLAN ERROR:", err.message);
-
+    console.error(err);
     res.status(500).json({
       success: false,
       error: "Plan generation failed"
@@ -166,7 +117,6 @@ RULES:
   }
 });
 
-// ---------------- SERVER START ----------------
-app.listen(PORT, () => {
-  console.log(`🚀 SUBCONIC Backend running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
+);
