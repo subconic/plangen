@@ -1,7 +1,10 @@
-// server.js
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+// server.js — FRONTEND FRIENDLY VERSION
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import fetch from "node-fetch";
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -16,6 +19,13 @@ app.get("/", (req, res) => {
 app.post("/api/generate-plan", async (req, res) => {
   try {
     const u = req.body;
+
+    if (!u.goal) {
+      return res.status(400).json({
+        success: false,
+        error: "Goal is required"
+      });
+    }
 
     const prompt = `
 You are SUBCONIC AI.
@@ -45,13 +55,11 @@ Return JSON in EXACT structure below:
       "morning": "",
       "night": ""
     },
-
     "burningDesires": [],
     "affirmations": [],
-
     "dailyRoutine": {
-      "guide": "A comprehensive guide on how to use this plan daily. Include specific time-based instructions, actionable steps, and practical implementation methods. Structure it as a clear daily guide with time blocks and specific actions.",
-      "implementation": "Point-wise implementation strategy covering how to execute each component of the plan effectively throughout the day."
+      "guide": "",
+      "implementation": ""
     }
   }
 }
@@ -65,27 +73,9 @@ Weekly Goal: ${u.weeklyGoal}
 Method: ${u.howToAchieve}
 Daily Hours: ${u.dailyHours}
 Time Window: ${u.startTime} to ${u.endTime}
-
-Rules:
-- brainprogram: emotional, subconscious programming routines
-- burningDesires: exactly 7 powerful desire lines
-- affirmations: exactly 5 identity-based affirmations
-- dailyRoutine.guide: detailed daily guide with time-based actionable instructions
-- dailyRoutine.implementation: point-wise execution strategy
-- planMeta.benefits: 4–5 clear benefits
-- planMeta.whyThisWorks: psychological + practical reasons
-
-Important Instructions for dailyRoutine:
-1. Create a comprehensive daily guide that shows exactly how to use the plan throughout the day
-2. Include specific time blocks based on user's time window (${u.startTime} to ${u.endTime})
-3. Structure as a complete daily workflow with actionable steps
-4. Add point-wise implementation strategy for effective execution
-5. Focus on practical, time-based guidance rather than day-wise breakdown
-6. Include morning routine, work blocks, breaks, evening routine, and night preparation
-7. Make it specific to the user's daily hours (${u.dailyHours} hours per day)
 `;
 
-    const response = await fetch(
+    const aiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
@@ -100,27 +90,45 @@ Important Instructions for dailyRoutine:
       }
     );
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!aiRes.ok) {
+      throw new Error("Gemini API failed");
+    }
+
+    const data = await aiRes.json();
+    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) throw new Error("Empty AI response");
 
+    // 🧠 Safe JSON extraction
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    text = text.slice(start, end + 1);
+
     const parsed = JSON.parse(text);
 
+    // 🔥 FRONTEND-FRIENDLY RESPONSE
     res.json({
       success: true,
-      plan: parsed
+
+      mainGoal: parsed.mainGoal,
+      planMeta: parsed.planMeta,
+
+      brainprogram: parsed.currentPlan.brainprogram,
+      burningDesires: parsed.currentPlan.burningDesires,
+      affirmations: parsed.currentPlan.affirmations,
+      dailyRoutine: parsed.currentPlan.dailyRoutine
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ PLAN ERROR:", err.message);
+
     res.status(500).json({
       success: false,
-      error: "Plan generation failed"
+      error: err.message
     });
   }
 });
 
-app.listen(PORT, () =>
-  console.log(`🚀 SUBCONIC Backend running on ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 SUBCONIC Backend running on ${PORT}`);
+});
