@@ -11,18 +11,17 @@ app.use(cors());
 app.use(express.json());
 
 // Gemini Configuration
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyA9o1BeUJYKWgJu2JeWqrAs1_3sRsqhzi0');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyCzu8cHN3ckqPrd-oBsGag6ZdmeH4EDJRQ');
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-// Strict prompt template (≤150 words)
+// Optimized prompt template (250-300 words)
 const PROMPT_TEMPLATE = (userDetails) => `
-Generate a 30-day subconscious reprogramming plan in ${userDetails.language}.
+Generate a 7-day focused action plan in ${userDetails.language}.
 
 User Details:
 - Goal: ${userDetails.goal}
-- Deadline: ${userDetails.deadline}
+- Deadline: ${userDetails.deadline} (use for emotional intensity)
 - Commitment: ${userDetails.commitment}
-- Current Awareness: ${userDetails.awareness}
 - Daily Time: ${userDetails.dailyHours} hours
 - Additional: ${userDetails.additionalDetails || "None"}
 
@@ -30,23 +29,25 @@ Generate ONLY this structured JSON output:
 
 {
   "planMeta": {
-    "planGoal": "One line goal summary",
-    "benefits": ["6 practical benefits"],
-    "whyThisWorks": ["5 reasons why this works"]
+    "planGoal": "Clear one-line goal statement",
+    "benefits": ["3-4 practical benefits"],
+    "actionSteps": ["5 actionable steps on HOW to achieve"]
   },
   "brainprogram": {
-    "morning": "3-line morning program",
-    "night": "3-line night program"
+    "morning": "25-50 word, morning routine to program mindset",
+    "night": "25-50 word, night routine to reinforce learning"
   },
-  "affirmation": ["7 identity-based affirmations"],
-  "burningDesires": ["7 emotional desire lines"]
+  "affirmation": ["7 identity-based affirmations in ${userDetails.language}"],
+  "burningDesires": ["7 emotional desire lines using ${userDetails.deadline} for urgency"]
 }
 
-Rules:
-- Total output: 400-450 words max
-- Benefits and whyThisWorks as arrays
-- All content in ${userDetails.language}
-- No markdown, only plain JSON
+CRITICAL RULES:
+1. actionSteps MUST be "how-to" instructions, NOT day-by-day schedule
+2. Example for "web dev": "Practice coding daily", "Build small projects", etc.
+3. Total output under 500-1000 words
+4. All content in ${userDetails.language}
+5. No markdown, only pure JSON
+6. Focus on 7-day intensive plan regardless of mentioned deadline
 `;
 
 // Generate Plan API
@@ -55,17 +56,17 @@ app.post('/generate-plan', async (req, res) => {
     const userDetails = req.body;
     
     // Validate required fields
-    if (!userDetails.goal || !userDetails.deadline || !userDetails.language) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!userDetails.goal || !userDetails.language) {
+      return res.status(400).json({ error: "Goal and Language are required" });
     }
 
-    console.log("🔵 Generating plan for:", userDetails.goal);
+    console.log("🔵 Generating 7-day plan for:", userDetails.goal);
 
     const prompt = PROMPT_TEMPLATE(userDetails);
     
-    // Call Gemini with timeout
+    // Call Gemini with timeout (90 seconds)
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000); // 90 seconds
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     const result = await model.generateContent(prompt, { signal: controller.signal });
     clearTimeout(timeout);
@@ -79,14 +80,25 @@ app.post('/generate-plan', async (req, res) => {
       throw new Error("AI response not in JSON format");
     }
     
-    const planData = JSON.parse(jsonMatch[0]);
+    let planData;
+    try {
+      planData = JSON.parse(jsonMatch[0]);
+    } catch (parseError) {
+      // Clean the JSON string
+      const cleanedText = jsonMatch[0]
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      planData = JSON.parse(cleanedText);
+    }
     
-    // Add timestamp and ID
+    // Add metadata
     planData.id = Date.now();
     planData.generatedAt = new Date().toISOString();
     planData.userGoal = userDetails.goal;
+    planData.planDuration = "7-day intensive plan";
     
-    console.log("✅ Plan generated successfully");
+    console.log("✅ 7-day plan generated successfully");
     res.json(planData);
     
   } catch (error) {
@@ -112,57 +124,57 @@ app.post('/generate-plan', async (req, res) => {
 function generateFallbackPlan(details) {
   return {
     planMeta: {
-      planGoal: `Achieve ${details.goal} within ${details.deadline}`,
+      planGoal: `Achieve "${details.goal}" in next 7 days`,
       benefits: [
-        "Daily progress tracking",
-        "Clear action steps",
-        "Subconscious alignment",
-        "Improved consistency",
-        "Better time management",
-        "Increased motivation"
+        "Clear daily focus and direction",
+        "Practical skill development",
+        "Consistent progress tracking",
+        "Increased confidence and momentum"
       ],
-      whyThisWorks: [
-        "Small daily actions compound",
-        "Mindset shapes reality",
-        "Consistency builds habits",
-        "Clarity reduces overwhelm",
-        "Emotional fuel drives action"
+      actionSteps: [
+        "Break goal into small daily actions",
+        "Dedicate focused time each day",
+        "Practice consistently without skipping",
+        "Review progress every evening",
+        "Adjust approach based on results"
       ]
     },
     brainprogram: {
-      morning: "Today, I take one step closer to my goal.\nMy mind is focused and ready.\nI have the energy to succeed.",
-      night: "I review today's progress with gratitude.\nMy subconscious works on my goals.\nTomorrow brings new opportunities."
+      morning: "My mind is focused on today's actions.\nI have the energy and clarity to progress.\nToday brings me closer to my goal.",
+      night: "I acknowledge today's efforts and learning.\nMy subconscious integrates today's progress.\nTomorrow I continue with renewed focus."
     },
     affirmation: [
-      "I am capable of achieving my goals.",
-      "Every day I make progress.",
-      "I have the discipline needed.",
-      "My actions align with my vision.",
+      "I am committed to my 7-day transformation.",
+      "Every day I become more capable.",
+      "My actions create real progress.",
       "I overcome challenges with ease.",
-      "I am committed to my success.",
-      "I deserve to achieve my dreams."
+      "I am disciplined and focused.",
+      "I deserve to achieve this goal.",
+      "My consistency brings results."
     ],
     burningDesires: [
-      "I deeply desire to achieve my goal completely.",
-      "I desire the feeling of success and accomplishment.",
-      "I desire to prove to myself that I can do this.",
-      "I desire the positive changes this will bring.",
-      "I desire to inspire others with my journey.",
-      "I desire to become the person who achieves this.",
-      "I desire to experience the transformation fully."
+      "I deeply desire to see real change in 7 days.",
+      "I desire the feeling of accomplishment by week's end.",
+      "I desire to prove my commitment to myself.",
+      "I desire the confidence this achievement will bring.",
+      "I desire to build momentum for bigger goals.",
+      "I desire to transform my habits in this week.",
+      "I desire to experience quick and tangible results."
     ],
     id: Date.now(),
-    isFallback: true
+    isFallback: true,
+    planDuration: "7-day intensive plan"
   };
 }
 
 // Health check
 app.get('/', (req, res) => {
   res.json({ 
-    status: "Server running",
+    status: "✅ Server running",
     endpoint: "POST /generate-plan",
     timeout: "90 seconds",
-    model: "gemini-2.5-flash-lite"
+    model: "gemini-2.5-flash-lite",
+    planType: "7-day actionable plan"
   });
 });
 
@@ -170,4 +182,5 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📝 Endpoint: POST http://localhost:${PORT}/generate-plan`);
+  console.log(`⏰ Plan Type: 7-day intensive action plan`);
 });
