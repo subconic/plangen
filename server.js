@@ -1,141 +1,173 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// Gemini Configuration
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyA9o1BeUJYKWgJu2JeWqrAs1_3sRsqhzi0');
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-// Generate plan endpoint
+// Strict prompt template (≤150 words)
+const PROMPT_TEMPLATE = (userDetails) => `
+Generate a 30-day subconscious reprogramming plan in ${userDetails.language}.
+
+User Details:
+- Goal: ${userDetails.goal}
+- Deadline: ${userDetails.deadline}
+- Commitment: ${userDetails.commitment}
+- Current Awareness: ${userDetails.awareness}
+- Daily Time: ${userDetails.dailyHours} hours
+- Additional: ${userDetails.additionalDetails || "None"}
+
+Generate ONLY this structured JSON output:
+
+{
+  "planMeta": {
+    "planGoal": "One line goal summary",
+    "benefits": ["6 practical benefits"],
+    "whyThisWorks": ["5 reasons why this works"]
+  },
+  "brainprogram": {
+    "morning": "3-line morning program",
+    "night": "3-line night program"
+  },
+  "affirmation": ["7 identity-based affirmations"],
+  "burningDesires": ["7 emotional desire lines"]
+}
+
+Rules:
+- Total output: 400-450 words max
+- Benefits and whyThisWorks as arrays
+- All content in ${userDetails.language}
+- No markdown, only plain JSON
+`;
+
+// Generate Plan API
 app.post('/generate-plan', async (req, res) => {
-    try {
-        const userData = req.body;
-        
-        // Create structured prompt
-        const prompt = createPrompt(userData);
-        
-        // Generate content using Gemini
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
-        
-        // Parse the response into JSON structure
-        const plan = parsePlanResponse(text);
-        
-        res.json({
-            success: true,
-            plan: plan,
-            rawResponse: text
-        });
-        
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+  try {
+    const userDetails = req.body;
+    
+    // Validate required fields
+    if (!userDetails.goal || !userDetails.deadline || !userDetails.language) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
+
+    console.log("🔵 Generating plan for:", userDetails.goal);
+
+    const prompt = PROMPT_TEMPLATE(userDetails);
+    
+    // Call Gemini with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000); // 90 seconds
+
+    const result = await model.generateContent(prompt, { signal: controller.signal });
+    clearTimeout(timeout);
+    
+    const response = await result.response;
+    const text = response.text();
+    
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("AI response not in JSON format");
+    }
+    
+    const planData = JSON.parse(jsonMatch[0]);
+    
+    // Add timestamp and ID
+    planData.id = Date.now();
+    planData.generatedAt = new Date().toISOString();
+    planData.userGoal = userDetails.goal;
+    
+    console.log("✅ Plan generated successfully");
+    res.json(planData);
+    
+  } catch (error) {
+    console.error("❌ Error:", error.message);
+    
+    if (error.name === 'AbortError') {
+      res.status(504).json({ error: "AI took too long to respond. Try again." });
+    } else if (error.message.includes("JSON")) {
+      res.status(500).json({ 
+        error: "AI response format issue",
+        fallback: generateFallbackPlan(req.body)
+      });
+    } else {
+      res.status(500).json({ 
+        error: "Internal server error",
+        details: error.message 
+      });
+    }
+  }
 });
 
-// Function to create structured prompt in English
-function createPrompt(userData) {
-    return `
-Create a comprehensive 7-day success plan based on the following user data. Structure your response in this EXACT format:
-
-===SUBCONSCIOUS PROGRAM (Morning & Night)===
-[Create a powerful paragraph here that user will read morning and night to program their subconscious mind for success. Make it inspiring and belief-building.]
-
-===BURNING DESIRE QUOTES (7)===
-1. [Quote 1 - motivating and action-oriented]
-2. [Quote 2 - specific to their goal]
-3. [Quote 3 - mindset focused]
-4. [Quote 4 - perseverance theme]
-5. [Quote 5 - identity reinforcing]
-6. [Quote 6 - urgency creating]
-7. [Quote 7 - future vision]
-
-===IDENTITY AFFIRMATIONS (5)===
-1. [Affirmation 1 - identity statement]
-2. [Affirmation 2 - capability statement]
-3. [Affirmation 3 - transformation statement]
-4. [Affirmation 4 - present tense achievement]
-5. [Affirmation 5 - core identity shift]
-
-===DAILY ROUTINE (Complete Day Structure)===
-[Create a detailed daily routine that starts from morning wake-up to night sleep. Include specific times, activities, and mindset practices. Make it practical and tailored to their time commitment. Structure it in clear time blocks.]
-
-===7-DAY ACTION PLAN===
-Day 1: [Specific action for day 1]
-Day 2: [Specific action for day 2]
-Day 3: [Specific action for day 3]
-Day 4: [Specific action for day 4]
-Day 5: [Specific action for day 5]
-Day 6: [Specific action for day 6]
-Day 7: [Specific action for day 7]
-
-Now, here is the user data to base the plan on:
-
-GOAL: ${userData.goal}
-DEADLINE: ${userData.deadline}
-COMMITMENT LEVEL: ${userData.commitment}
-ACTION PLAN: ${userData.actionPlan}
-WEEKLY GOAL: ${userData.weeklyGoal}
-DAILY HOURS: ${userData.dailyHours}
-WORKING TIME: ${userData.workingTime}
-ADDITIONAL INFO: ${userData.additionalInfo || 'None'}
-
-Make the plan specific, actionable, and tailored exactly to this user's situation. Focus on creating a routine that they can follow for 7 days.`;
+// Fallback plan if AI fails
+function generateFallbackPlan(details) {
+  return {
+    planMeta: {
+      planGoal: `Achieve ${details.goal} within ${details.deadline}`,
+      benefits: [
+        "Daily progress tracking",
+        "Clear action steps",
+        "Subconscious alignment",
+        "Improved consistency",
+        "Better time management",
+        "Increased motivation"
+      ],
+      whyThisWorks: [
+        "Small daily actions compound",
+        "Mindset shapes reality",
+        "Consistency builds habits",
+        "Clarity reduces overwhelm",
+        "Emotional fuel drives action"
+      ]
+    },
+    brainprogram: {
+      morning: "Today, I take one step closer to my goal.\nMy mind is focused and ready.\nI have the energy to succeed.",
+      night: "I review today's progress with gratitude.\nMy subconscious works on my goals.\nTomorrow brings new opportunities."
+    },
+    affirmation: [
+      "I am capable of achieving my goals.",
+      "Every day I make progress.",
+      "I have the discipline needed.",
+      "My actions align with my vision.",
+      "I overcome challenges with ease.",
+      "I am committed to my success.",
+      "I deserve to achieve my dreams."
+    ],
+    burningDesires: [
+      "I deeply desire to achieve my goal completely.",
+      "I desire the feeling of success and accomplishment.",
+      "I desire to prove to myself that I can do this.",
+      "I desire the positive changes this will bring.",
+      "I desire to inspire others with my journey.",
+      "I desire to become the person who achieves this.",
+      "I desire to experience the transformation fully."
+    ],
+    id: Date.now(),
+    isFallback: true
+  };
 }
 
-// Function to parse the response into structured object
-function parsePlanResponse(text) {
-    const sections = text.split('===');
-    
-    const plan = {
-        subconsciousProgram: '',
-        burningDesireQuotes: [],
-        identityAffirmations: [],
-        dailyRoutine: '',
-        sevenDayPlan: []
-    };
-    
-    sections.forEach(section => {
-        if (section.includes('SUBCONSCIOUS PROGRAM')) {
-            plan.subconsciousProgram = section.replace('SUBCONSCIOUS PROGRAM (Morning & Night)', '').trim();
-        } else if (section.includes('BURNING DESIRE QUOTES')) {
-            const quotesSection = section.replace('BURNING DESIRE QUOTES (7)', '');
-            const quotes = quotesSection.split('\n').filter(line => line.match(/^\d\./));
-            plan.burningDesireQuotes = quotes.map(q => q.replace(/^\d\.\s*/, '').trim());
-        } else if (section.includes('IDENTITY AFFIRMATIONS')) {
-            const affirmationsSection = section.replace('IDENTITY AFFIRMATIONS (5)', '');
-            const affirmations = affirmationsSection.split('\n').filter(line => line.match(/^\d\./));
-            plan.identityAffirmations = affirmations.map(a => a.replace(/^\d\.\s*/, '').trim());
-        } else if (section.includes('DAILY ROUTINE')) {
-            plan.dailyRoutine = section.replace('DAILY ROUTINE (Complete Day Structure)', '').trim();
-        } else if (section.includes('7-DAY ACTION PLAN')) {
-            const planSection = section.replace('7-DAY ACTION PLAN', '');
-            const days = planSection.split('\n').filter(line => line.match(/^Day \d:/));
-            plan.sevenDayPlan = days.map(day => day.trim());
-        }
-    });
-    
-    return plan;
-}
-
-// Test endpoint
-app.get('/test', (req, res) => {
-    res.json({ message: 'Server is working!' });
+// Health check
+app.get('/', (req, res) => {
+  res.json({ 
+    status: "Server running",
+    endpoint: "POST /generate-plan",
+    timeout: "90 seconds",
+    model: "gemini-2.5-flash-lite"
+  });
 });
 
 // Start server
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📝 Endpoint: POST http://localhost:${PORT}/generate-plan`);
 });
