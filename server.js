@@ -69,6 +69,7 @@ CRITICAL RULES:
 6. Focus on creating desire + clarity that leads to automatic action
 7. Total length between 500–1000 words
 8. Output MUST be pure JSON only
+==>Text according Language, if hindi write every thing in hindi, if hinglish so text in english but language simple mix of hindi and english otherwise english but simple.
 `;
 
 
