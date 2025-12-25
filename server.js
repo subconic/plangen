@@ -16,39 +16,54 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 // Optimized prompt template (250-300 words)
 const PROMPT_TEMPLATE = (userDetails) => `
-Generate a 7-day focused action plan in ${userDetails.language}.
+You are an expert behavioral strategist and action-plan architect.
 
-User Details:
-- Goal: ${userDetails.goal}
-- Deadline: ${userDetails.deadline} (use for emotional intensity)
-- Commitment: ${userDetails.commitment}
-- Daily Time: ${userDetails.dailyHours} hours
-- Additional: ${userDetails.additionalDetails || "None"}
+Your task is to generate a **high-impact 7-day focused action plan** in ${userDetails.language}.
+This plan must be practical, psychologically engaging, and execution-oriented.
 
-Generate ONLY this structured JSON output:
+USER CONTEXT:
+- Primary Goal: ${userDetails.goal}
+- Deadline: ${userDetails.deadline} (use ONLY to add urgency and emotional weight)
+- Commitment Level: ${userDetails.commitment}
+- Daily Available Time: ${userDetails.dailyHours} hours
+- Additional Context: ${userDetails.additionalDetails || "None"}
+
+OUTPUT REQUIREMENTS:
+Generate ONLY the following JSON structure.
+Do NOT add explanations, comments, markdown, or extra text.
 
 {
   "planMeta": {
-    "planGoal": "Clear one-line goal statement",
-    "benefits": ["3-4 practical benefits"],
-    "actionSteps": ["5 actionable steps on HOW to achieve"]
+    "planGoal": "One clear, specific, outcome-oriented goal statement",
+    "benefits": [
+      "3–4 concrete, real-world benefits the user will experience"
+    ],
+    "actionSteps": [
+      "5 clear HOW-TO steps focused on execution (not a daily schedule)"
+    ]
   },
   "brainprogram": {
-    "morning": "25-50 word, morning routine to program mindset",
-    "night": "25-50 word, night routine to reinforce learning"
+    "morning": "25–50 words describing a simple morning mental routine that aligns thoughts and actions with the goal",
+    "night": "25–50 words describing a night reflection or mental reinforcement routine"
   },
-  "affirmation": ["7 identity-based affirmations in ${userDetails.language}"],
-  "burningDesires": ["7 emotional desire lines using ${userDetails.deadline} for urgency"]
+  "affirmation": [
+    "7 short, identity-based affirmations written in first person"
+  ],
+  "burningDesires": [
+    "7 emotionally charged desire statements that create urgency using the deadline (${userDetails.deadline})"
+  ]
 }
 
-CRITICAL RULES:
-1. actionSteps MUST be "how-to" instructions, NOT day-by-day schedule
-2. Example for "web dev": "Practice coding daily", "Build small projects", etc.
-3. Total output under 500-1000 words
-4. All content in ${userDetails.language}
-5. No markdown, only pure JSON
-6. Focus on 7-day intensive plan regardless of mentioned deadline
+STRICT RULES:
+1. actionSteps must explain HOW to progress, not WHAT to do each day
+2. Do NOT create a day-by-day timetable
+3. Language must be simple, direct, and actionable
+4. Total response length must stay within 500–1000 words
+5. ALL content must be written in ${userDetails.language}
+6. Focus on intensity and clarity suitable for a 7-day execution sprint
+7. Output must be valid JSON only, nothing else
 `;
+
 
 // Generate Plan API
 app.post('/generate-plan', async (req, res) => {
