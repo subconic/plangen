@@ -16,53 +16,61 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 // Optimized prompt template (250-300 words)
 const PROMPT_TEMPLATE = (userDetails) => `
-You are an expert behavioral strategist and action-plan architect.
+You are a subconscious programming expert and behavioral architect.
 
-Your task is to generate a **high-impact 7-day focused action plan** in ${userDetails.language}.
-This plan must be practical, psychologically engaging, and execution-oriented.
+Your task is to create a 7-day intensive mental + action framework that:
+- Creates STRONG DESIRE for the goal
+- Makes the goal feel emotionally inevitable
+- Aligns the user's subconscious mind so action happens automatically, without force or fake motivation
 
 USER CONTEXT:
-- Primary Goal: ${userDetails.goal}
-- Deadline: ${userDetails.deadline} (use ONLY to add urgency and emotional weight)
+- Goal: ${userDetails.goal}
+- Deadline: ${userDetails.deadline} (use only to increase emotional urgency, not planning)
 - Commitment Level: ${userDetails.commitment}
 - Daily Available Time: ${userDetails.dailyHours} hours
 - Additional Context: ${userDetails.additionalDetails || "None"}
 
-OUTPUT REQUIREMENTS:
-Generate ONLY the following JSON structure.
-Do NOT add explanations, comments, markdown, or extra text.
+IMPORTANT INTENT:
+This is NOT a motivational speech.
+This is subconscious conditioning.
+The language must feel real, grounded, emotionally honest, and internally activating.
+
+OUTPUT FORMAT:
+Generate ONLY valid JSON. No markdown. No explanations.
 
 {
   "planMeta": {
-    "planGoal": "One clear, specific, outcome-oriented goal statement",
+    "planGoal": "One emotionally clear sentence that defines WHAT the user truly wants and WHY it matters to them internally",
     "benefits": [
-      "3–4 concrete, real-world benefits the user will experience"
+      "3–4 practical life-level benefits that the user will actually FEEL (confidence, freedom, control, relief, pride)"
     ],
     "actionSteps": [
-      "5 clear HOW-TO steps focused on execution (not a daily schedule)"
+      "5 HOW-based execution principles that guide action naturally (not daily schedule, not force-based)"
     ]
   },
   "brainprogram": {
-    "morning": "25–50 words describing a simple morning mental routine that aligns thoughts and actions with the goal",
-    "night": "25–50 words describing a night reflection or mental reinforcement routine"
+    "morning": "25–50 words. A subconscious alignment routine that makes the goal feel desirable, reachable, and part of the user's identity",
+    "night": "25–50 words. A reinforcement routine that settles belief, reduces resistance, and trains the mind to expect success"
   },
   "affirmation": [
-    "7 short, identity-based affirmations written in first person"
+    "7 first-person, identity-based affirmations that build self-belief, confidence, and a calm, positive mindset aligned with the goal"
   ],
   "burningDesires": [
-    "7 emotionally charged desire statements that create urgency using the deadline (${userDetails.deadline})"
+    "7 emotionally charged, honest desire statements that make the user WANT to act immediately — not out of fear, but out of inner pull and urgency using the deadline (${userDetails.deadline})"
   ]
 }
 
-STRICT RULES:
-1. actionSteps must explain HOW to progress, not WHAT to do each day
-2. Do NOT create a day-by-day timetable
-3. Language must be simple, direct, and actionable
-4. Total response length must stay within 500–1000 words
-5. ALL content must be written in ${userDetails.language}
-6. Focus on intensity and clarity suitable for a 7-day execution sprint
-7. Output must be valid JSON only, nothing else
+CRITICAL RULES:
+1. BurningDesires must create emotional pull, not fake hype or aggressive motivation
+2. Affirmations must feel believable, grounded, and identity-shaping
+3. Language must speak directly to the subconscious (simple, emotional, present-focused)
+4. No force, no pressure words like 'must', 'have to', or guilt-based language
+5. All content must be written in ${userDetails.language}
+6. Focus on creating desire + clarity that leads to automatic action
+7. Total length between 500–1000 words
+8. Output MUST be pure JSON only
 `;
+
 
 
 // Generate Plan API
