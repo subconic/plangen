@@ -34,13 +34,13 @@ USER CONTEXT:
 
 IMPORTANT INTENT:
 This is NOT motivation.
-This is NOT inspiration.
-This is subconscious conditioning.
+This is NOT theory or gyaan.
+This is subconscious conditioning + execution alignment.
 
 The language must:
 - Feel real, grounded, and emotionally honest
-- Speak directly to the subconscious mind
-- Reduce resistance and mental friction
+- Push toward REAL ACTION, not explanation
+- Reduce overthinking and trigger movement
 - Create calm certainty, not pressure or hype
 
 OUTPUT RULES:
@@ -53,36 +53,38 @@ OUTPUT FORMAT (STRICT):
 
 {
   "planMeta": {
-    "planGoal": "One emotionally clear sentence defining what the user truly wants and why it matters internally (identity-level)",
+    "planGoal": "One emotionally clear sentence defining what the user is actively moving toward and why they refuse to stay where they are",
     "benefits": [
-      "3–4 real-life benefits the user will actually FEEL (relief, confidence, control, pride, freedom)"
+      "3–4 practical life-level results the user will NOTICE in daily life after taking action (momentum, clarity, control, confidence)"
     ],
     "actionSteps": [
-      "5 HOW-based execution principles that guide natural action (no schedules, no force, no discipline language)"
+      "5 CLEAR, EXECUTION-BASED ACTION DIRECTIONS directly tied to the goal — each step must describe WHAT TO DO, not philosophy, not advice, not mindset"
     ]
   },
   "brainprogram": {
-    "morning": "25–50 words. A subconscious alignment routine that makes the goal feel desirable, reachable, and part of the user's identity",
-    "night": "25–50 words. A reinforcement routine that settles belief, releases resistance, and trains expectation of success"
+    "morning": "25–50 words. A subconscious alignment routine that primes the mind for action, reduces hesitation, and creates readiness to move",
+    "night": "25–50 words. A reinforcement routine that locks learning from action, calms doubt, and conditions expectation of progress"
   },
   "affirmation": [
-    "7 first-person, identity-based affirmations that feel believable, calm, and internally stabilizing"
+    "7 first-person, identity-based affirmations that reinforce action-taking identity and self-trust"
   ],
   "burningDesires": [
-    "7 emotionally honest desire statements that create inner pull and urgency connected to the deadline (${userDetails.deadline}), without fear, guilt, or hype"
+    "7 emotionally honest desire statements that create inner pull and urgency connected to the deadline (${userDetails.deadline}), focused on ACTION and progress, not fear or hype"
   ]
 }
 
 CRITICAL RULES (DO NOT VIOLATE):
-1. BurningDesires must create emotional pull, not aggressive motivation or fake intensity
-2. Affirmations must feel grounded, believable, and identity-shaping
-3. Language must be simple, emotional, present-focused, and subconscious-friendly
-4. Do NOT use force-based words like 'must', 'have to', 'should', or guilt language
-5. All content MUST be written in ${userDetails.language}
-6. Focus on desire + clarity that leads to automatic action
-7. Total output length must be between 500–1000 words
-8. Output MUST be pure JSON only — no trailing text, no comments
+1. actionSteps MUST be execution-focused — no gyaan, no explanation, no theory
+2. Each actionStep should feel immediately doable and movement-oriented
+3. BurningDesires must create pull toward action, not pressure or aggression
+4. Affirmations must feel believable, grounded, and identity-shaping
+5. Do NOT use force-based words like 'must', 'have to', 'should'
+6. All content MUST be written in ${userDetails.language}
+7. Focus on clarity + movement that leads to automatic execution
+8. Total output length must be between 500–1000 words
+9. Output MUST be pure JSON only
 `;
+
 
 
 
