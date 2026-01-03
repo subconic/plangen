@@ -18,57 +18,70 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 const PROMPT_TEMPLATE = (userDetails) => `
 You are a subconscious programming expert and behavioral architect.
 
-Your task is to create a 7-day intensive mental + action framework that:
-- Creates STRONG DESIRE for the goal
-- Makes the goal feel emotionally inevitable
-- Aligns the user's subconscious mind so action happens automatically, without force or fake motivation
+Your task is to generate a 7-day intensive mental + action conditioning framework that works at the SUBCONSCIOUS level.
+
+The framework must:
+- Create a STRONG, emotionally charged desire for the goal
+- Make the goal feel internally inevitable (not forced, not hyped)
+- Align the subconscious so that action happens naturally and automatically
 
 USER CONTEXT:
 - Goal: ${userDetails.goal}
-- Deadline: ${userDetails.deadline} (use only to increase emotional urgency, not planning)
+- Deadline: ${userDetails.deadline} (use ONLY to create emotional urgency, never for scheduling or planning)
 - Commitment Level: ${userDetails.commitment}
 - Daily Available Time: ${userDetails.dailyHours} hours
 - Additional Context: ${userDetails.additionalDetails || "None"}
 
 IMPORTANT INTENT:
-This is NOT a motivational speech.
+This is NOT motivation.
+This is NOT inspiration.
 This is subconscious conditioning.
-The language must feel real, grounded, emotionally honest, and internally activating.
 
-OUTPUT FORMAT:
-Generate ONLY valid JSON. No markdown. No explanations.
+The language must:
+- Feel real, grounded, and emotionally honest
+- Speak directly to the subconscious mind
+- Reduce resistance and mental friction
+- Create calm certainty, not pressure or hype
+
+OUTPUT RULES:
+- Generate ONLY valid JSON
+- No markdown
+- No explanations
+- No extra text before or after JSON
+
+OUTPUT FORMAT (STRICT):
 
 {
   "planMeta": {
-    "planGoal": "One emotionally clear sentence that defines WHAT the user truly wants and WHY it matters to them internally",
+    "planGoal": "One emotionally clear sentence defining what the user truly wants and why it matters internally (identity-level)",
     "benefits": [
-      "3–4 practical life-level benefits that the user will actually FEEL (confidence, freedom, control, relief, pride)"
+      "3–4 real-life benefits the user will actually FEEL (relief, confidence, control, pride, freedom)"
     ],
     "actionSteps": [
-      "5 HOW-based execution principles that guide action naturally (not daily schedule, not force-based)"
+      "5 HOW-based execution principles that guide natural action (no schedules, no force, no discipline language)"
     ]
   },
   "brainprogram": {
     "morning": "25–50 words. A subconscious alignment routine that makes the goal feel desirable, reachable, and part of the user's identity",
-    "night": "25–50 words. A reinforcement routine that settles belief, reduces resistance, and trains the mind to expect success"
+    "night": "25–50 words. A reinforcement routine that settles belief, releases resistance, and trains expectation of success"
   },
   "affirmation": [
-    "7 first-person, identity-based affirmations that build self-belief, confidence, and a calm, positive mindset aligned with the goal"
+    "7 first-person, identity-based affirmations that feel believable, calm, and internally stabilizing"
   ],
   "burningDesires": [
-    "7 emotionally charged, honest desire statements that make the user WANT to act immediately — not out of fear, but out of inner pull and urgency using the deadline (${userDetails.deadline})"
+    "7 emotionally honest desire statements that create inner pull and urgency connected to the deadline (${userDetails.deadline}), without fear, guilt, or hype"
   ]
 }
 
-CRITICAL RULES:
-1. BurningDesires must create emotional pull, not fake hype or aggressive motivation
-2. Affirmations must feel believable, grounded, and identity-shaping
-3. Language must speak directly to the subconscious (simple, emotional, present-focused)
-4. No force, no pressure words like 'must', 'have to', or guilt-based language
-5. All content must be written in ${userDetails.language}
-6. Focus on creating desire + clarity that leads to automatic action
-7. Total length between 500–1000 words
-8. Output MUST be pure JSON only
+CRITICAL RULES (DO NOT VIOLATE):
+1. BurningDesires must create emotional pull, not aggressive motivation or fake intensity
+2. Affirmations must feel grounded, believable, and identity-shaping
+3. Language must be simple, emotional, present-focused, and subconscious-friendly
+4. Do NOT use force-based words like 'must', 'have to', 'should', or guilt language
+5. All content MUST be written in ${userDetails.language}
+6. Focus on desire + clarity that leads to automatic action
+7. Total output length must be between 500–1000 words
+8. Output MUST be pure JSON only — no trailing text, no comments
 `;
 
 
