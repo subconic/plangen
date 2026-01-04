@@ -18,72 +18,69 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 const PROMPT_TEMPLATE = (userDetails) => `
 You are a subconscious programming expert and behavioral architect.
 
-Your task is to generate a 7-day intensive mental + action conditioning framework that works at the SUBCONSCIOUS level.
-
-The framework must:
-- Create a STRONG, emotionally charged desire for the goal
-- Make the goal feel internally inevitable (not forced, not hyped)
-- Align the subconscious so that action happens naturally and automatically
+Your task is to create a 7-day intensive mental + action framework that:
+- Creates STRONG DESIRE for the goal
+- Makes the goal feel emotionally inevitable
+- Aligns the user's subconscious mind so action happens naturally and automatically
 
 USER CONTEXT:
 - Goal: ${userDetails.goal}
-- Deadline: ${userDetails.deadline} (use ONLY to create emotional urgency, never for scheduling or planning)
+- Deadline: ${userDetails.deadline} (use ONLY to increase emotional urgency, not planning)
 - Commitment Level: ${userDetails.commitment}
 - Daily Available Time: ${userDetails.dailyHours} hours
 - Additional Context: ${userDetails.additionalDetails || "None"}
 
 IMPORTANT INTENT:
 This is NOT motivation.
-This is NOT theory or gyaan.
-This is subconscious conditioning + execution alignment.
+This is subconscious conditioning.
+Language must be emotionally grounded, believable, calm, and internally activating.
+No exaggeration. No hype.
 
-The language must:
-- Feel real, grounded, and emotionally honest
-- Push toward REAL ACTION, not explanation
-- Reduce overthinking and trigger movement
-- Create calm certainty, not pressure or hype
-
-OUTPUT RULES:
+OUTPUT RULES (STRICT):
 - Generate ONLY valid JSON
 - No markdown
 - No explanations
-- No extra text before or after JSON
+- No extra keys
+- No emojis
+- No line breaks outside JSON
+- All strings must be properly escaped
+- Do NOT include trailing commas
 
-OUTPUT FORMAT (STRICT):
+OUTPUT FORMAT (EXACT):
 
 {
   "planMeta": {
-    "planGoal": "One emotionally clear sentence defining what the user is actively moving toward and why they refuse to stay where they are",
+    "planGoal": "One emotionally clear sentence that defines what the user truly wants and why it matters internally",
     "benefits": [
-      "3–4 practical life-level results the user will NOTICE in daily life after taking action (momentum, clarity, control, confidence)"
+      "3–4 practical, life-level benefits the user will actually feel (confidence, control, relief, pride, freedom)"
     ],
     "actionSteps": [
-      "5 CLEAR, EXECUTION-BASED ACTION DIRECTIONS directly tied to the goal — each step must describe WHAT TO DO, not philosophy, not advice, not mindset"
+      "5 HOW-based execution principles that guide action naturally (no schedules, no force)"
     ]
   },
   "brainprogram": {
-    "morning": "25–50 words. A subconscious alignment routine that primes the mind for action, reduces hesitation, and creates readiness to move",
-    "night": "25–50 words. A reinforcement routine that locks learning from action, calms doubt, and conditions expectation of progress"
+    "morning": "25–50 words. Subconscious alignment that makes the goal feel desirable, reachable, and identity-based",
+    "night": "25–50 words. Reinforcement that settles belief, removes resistance, and trains expectation of success"
   },
   "affirmation": [
-    "7 first-person, identity-based affirmations that reinforce action-taking identity and self-trust"
+    "7 first-person, identity-based affirmations that feel believable and calm"
   ],
   "burningDesires": [
-    "7 emotionally honest desire statements that create inner pull and urgency connected to the deadline (${userDetails.deadline}), focused on ACTION and progress, not fear or hype"
+    "7 emotionally honest desire statements that create inner pull and urgency using the deadline (${userDetails.deadline})"
   ]
 }
 
-CRITICAL RULES (DO NOT VIOLATE):
-1. actionSteps MUST be execution-focused — no gyaan, no explanation, no theory
-2. Each actionStep should feel immediately doable and movement-oriented
-3. BurningDesires must create pull toward action, not pressure or aggression
-4. Affirmations must feel believable, grounded, and identity-shaping
-5. Do NOT use force-based words like 'must', 'have to', 'should'
-6. All content MUST be written in ${userDetails.language}
-7. Focus on clarity + movement that leads to automatic execution
-8. Total output length must be between 500–1000 words
-9. Output MUST be pure JSON only
+CRITICAL CONSTRAINTS:
+1. BurningDesires must create emotional pull, not pressure or fear
+2. Affirmations must feel realistic, grounded, and identity-shaping
+3. Language must speak to the subconscious: simple, present-focused, emotionally honest
+4. Do NOT use force words like: must, have to, should, guilt, pressure
+5. ALL content must be written strictly in ${userDetails.language}
+6. Focus on desire + clarity so action happens automatically
+7. Total output length between 500–1000 words
+8. Output MUST be pure JSON only
 `;
+
 
 
 
